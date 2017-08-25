@@ -2,7 +2,7 @@
 1. [Introduction](#intro)
     * [Repository Structure](#Repository)
     * [Getting Started](#gettingStarted)
-2. [Requirements](#requirements)
+2. [Partner Requirements and Guidelines](#requirements)
 3. [Partner Module Overview](#overview)
     * [Configuration](#configuration)
     * [Event Model](#eventModel)
@@ -21,13 +21,12 @@
 
 Below you will find everything you need to complete the certification process and be a part of the Header Tag Wrapper!
 
+This section describes how to create a non-bidding partner module. A non-bidding partner module is one that does not participate directly in the auction or provide any ads to display. It may provide targeting to set on a slot level or page level, or both.
+
 ## <a name='Repository'></a>Repository Structure
-* `README.md`             -This is the main documentation file which should contain everything you need to complete the certification process. If anything is unclear, please refer to this document first.
+* `README.md` - This is the main documentation file which should contain everything you need to complete the certification process. If anything is unclear, please refer to this document first.
 * `grapeshot-nob.js` - This is your partner module file, by default it contains a template divided into multiple sections which need to be completed.
 * `grapeshot-nob-validator.js` - This is the validator file for the configuration object that will be passed into your module.
-* `grapeshot-nob-exports.js` - A file that contains all of the modules exports (i.e. any functions that need to be exposed to the outside world).
-* `spec` - Contains the unit tests for the module.
-    * `mockPartnerConfig.json` - this is a mock partner config for your module that will be used for unit testing.
 
 ##  <a name='gettingStarted'></a>Getting Started
 1. <b>Complete the grapeshot-nob.js file </b>
@@ -37,35 +36,11 @@ Below you will find everything you need to complete the certification process an
 2. <b>Complete the grapeshot-nob-validator.js file</b>
     * This file is where your partner-specific configurations will need to be validated.
     * Things like type and null checks will be done here.
-3. <b>Complete the grapeshot-nob-exports.js file</b>
-    * This file will contain any functions that need to be exported or exposed to the outside world. Things like render functions, custom callbacks, etc. Any legacy render functions will also need to be exposed here. Anything added to the `shellInterface.GrapeshotNob` will be accessible through `window.headertag.GrapeshotNob`
-4. <b> Run & Create Unit tests for your module</b>
-    * Inside the spec folder you will find a set of basic unit tests for your module.
-    * You must pass these basic unit tests before submitting your module.
-    * In addition, you should create more specific unit tests with actual values based on mock ad responses to confirm that your module is working as expected.
+3. <b> Create & Run Unit tests for your module</b>
+    * You should create specific unit tests in the spec folder with actual values based on mock ad responses to confirm that your module is working as expected.
     * Please refer to the [Testing](#testing) section below for more information.
-5. <b>Submitting for Review</b>
+4. <b>Submitting for Review</b>
     * Once the module has been verified submit a pull request from the `development-v2`branch to the `master-v2` branch for the Index Exchange team to review. If everything is approved, your adapter will be officially certified!
-
-Our standard creative tag in dfp looks as follows:
-```html
-<script type="text/javascript">
-var w = window;
-for (var i = 0; i < 10; i++) {
-    w = w.parent;
-    if (w.headertag) {
-        try {
-            w.headertag.GrapeshotNob.render(document, %%PATTERN:TARGETINGMAP%%, '%%WIDTH%%', '%%HEIGHT%%');
-            break;
-        } catch (e) {
-            continue;
-        }
-    }
-}
-</script>
-```
-
-<br>
 
 # <a name='requirements'></a> Partner Requirements & Guildelines
 In order for your module to be successfully certified, please refer to the following list of requirements and guidelines.
@@ -74,37 +49,22 @@ Items under required <b><u>must</b></u> be satisfied in order to pass the certif
 ### General
 
 #### Required
-* The only targeting keys that can be set are predetermined by Index. The partner module should not be setting targeting on other keys.
-* Must support the following browsers: IE 9+, Edge, Chrome, Safari, and Firefox
+* The only targeting keys that can be set are predetermined by Index. The partner module should not set targeting on other keys.
+* Must support the following browsers: IE 10+, Edge, Chrome, Safari, and Firefox
 
 #### Recommended
 * Please use our helper libraries when possible. Refer to our [Utility Libraries](#helpers) documentation below. All of the utility functions in this library are designed to be backwards compatible with supported browsers to ease cross-browser compatibility.
 
-### Bid Request Endpoint
+### Request Endpoint
 
 #### Required
 * Must provide cache busting parameter. Cache busting is required to prevent network caches.
 * Partner endpoint domain must be consistent. Load balancing should be performed by the endpoint.
-* Your endpoint should support HTTPS request. When wrapper loads in secure pages, all requests need to be HTTPS. If you're unable to provide a secure endpoint, we will not be able to make requests to your ad servers.
+* Your endpoint should support HTTPS requests. When wrapper loads in secure pages, all requests need to be HTTPS. If you're unable to provide a secure endpoint, we will not be able to make requests to your ad servers.
 
-#### Recommended
+#### Recommended;
 * Your module should support a single request architecture (SRA) which has a capability to send multiple bid requests in a single HTTP request.
 * Partner should use AJAX method to make bid requests. Please use our [Network](#network) utility library for making network requests, particularly the `Network.ajax` method. This ensures the requests will work with all browsers.
-
-### Bid Response
-
-#### Required
-* Returned bid must be a <b>net</b> bid.
-* Pass on bid must be explicit in the response.
-* All returned bids shall be in the currency trafficked by the publisher.
-* Size must be returned in the response. The sizes must also match the requested size. This size parameter will be validated.
-* Encrypted prices must be flagged in the response.
-
-### Pixels & Tracking Beacons
-
-#### Required
-* Pixels/beacons must only be dropped only when the partner wins the auction and their ad renders.
-* Dropping pixels during auction slows down the execution of auctions and is not allowed by Index Exchange.
 
 ### DFP Setup
 
@@ -118,14 +78,16 @@ Items under required <b><u>must</b></u> be satisfied in order to pass the certif
 
 The Header Tag Wrapper passes each partner a configuration object that has been configured based on a publisher's website. This object contains all the configuration information required for the wrapper, including partner-specific slot mappings, timeouts, and any other partner-specific configuration.
 The partner-specific slot mappings dictate how ad slots on the page will map to partner-specific configuration.
-There are 2 concepts to be familiar with when understanding how slots on the page are mapped back to partner-specific configuration. Header Tag Slots, which refers to htSlots and partner-specific configuration, which refers to xSlots in the codebase.
+There are 2 concepts to be familiar with when understanding how slots on the page are mapped back to partner-specific configuration. Header Tag Slots, which are referred to as htSlots, and partner-specific slot configuration, which is called xSlots in the codebase.
 * htSlots - This is an abstraction of the googletag.slot object.
-  * These will need to be mapped to xSlots.
+  * The set of available htSlots is configured elsewhere in the wrapper and is shared by all partner modules. 
+  * These will need to be mapped to xSlots in the configuration object and in the partner module's code.
 * xSlots - These are also an abstraction for partner-specific configuration that will be mapped to htSlots.
   * These represent a single partner-specific configuration.
   * An xSlot is how a partner can map their ad server specific identifiers (placementIDs, siteIDs, zoneIDs, etc) to the `htSlot` object.
   * It can represent a single or multiple sizes.
   * Multiple xSlots can be mapped to the same htSlot.
+  * Multiple htSlots can have the same xSlot in their mappings.
 
 Example Partner Configuration Mapping
 ```javascript
@@ -134,14 +96,13 @@ Example Partner Configuration Mapping
         "GrapeshotNob": {
             "enabled": true,
             "configs": {
+                "publisherId": "abc123",
                 "xSlots": {
                     "xSlot1": {
-                        "placementID": "123",
-                        "sizes": [ [300, 250], [300, 600] ]
+                        "placementID": "123"
                     },
                     "xSlot2": {
-                        "placementID": "345",
-                        "sizes": [ [300, 250] ]
+                        "placementID": "345"
                     }
                 },
                 "mapping": {
@@ -154,31 +115,44 @@ Example Partner Configuration Mapping
 }
 ```
 
-Based on the mapping defined in the partner config, <i>Parcels</i> will be generated for every xSlot/htSlot pair. Parcels are objects that carry different kinds of information throughout the wrapper. In the context of the adapter, parcels are the input into your adapter. Parcels carry information regarding which slots on the publisher's page need demand. More specifically parcels contain information like xSlot reference, htSlot references, demand (after its been applied by the adapter in parseResponse), etc. Each parcel represents a single combination of an htSlot and an xSlot.
+When the wrapper initiates an auction, <i>Parcels</i> will be generated for every htSlot which is currently active on the page. Parcels are objects that carry different kinds of information throughout the wrapper. In the context of the adapter, parcels are the input into your adapter. Parcels carry information regarding which slots on the publisher's page need demand. More specifically each parcel contains an htSlot object reference. If your adapter gets slot-level demand, it should use the values returned by htSlot.getName() as the index into the mapping object in your config.
 
-Each parcel is an object in the following form:
+Each parcel passed to your adapter is an object in the following form:
 
 ```javascript
 {
-    "partnerId": "GRAPE",
     "htSlot": {
       "__type__": "HeaderTagSlot"
     },
     "ref": "googletag.Slot",      // reference to the slot on the page, in this example it is a googletag slot
-    "xSlotRef": {   // contains the reference to the xSlot object from the partner configuration.
-      "placementID": "123",
-      "sizes": [ [300, 250], [300, 600] ]
-    },
-    "xSlotName": "1",
-    "requestId": "_fwyvecpA"
 }
 ```
 
-These parcels will be fed into both of the functions that your adapter needs to implement:
+These parcels will be fed into the `__retriever` function of your partner module. This function must return an array of promises, one for each network request your module makes. Each promise will resolve with an array of new parcel objects providing the result of your partner's network call.
 
-1. First `generateRequestObj` will need to craft a bid request for the `parcels` that need demand.
+The parcels returned by your adapter are objects in the following form:
 
-2. Second `parseResponse` will take the same parcels and apply the demand (set specific properties in the parcel objects) that is returned from the bid requests to the same parcels and send them back to the wrapper.
+```javascript
+{
+    "htSlot": {     // The same htSlot object from the parcel you were given
+      "__type__": "HeaderTagSlot"
+    },
+    "ref": "googletag.Slot",      // reference to the slot on the page, also from the parcel you were given
+    "partnerId": __profile.partnerId,
+    "partnerStatsId": __profile.statsId,
+    "targetingType": "page" or "slot",
+    "targeting": {      // The targeting to be set, if any
+        "key1": ["value1", "value2", ...],
+        "key2": [...]
+    }
+}
+```
+
+The targeting you provide in the `targeting` member of each parcel you return will be set by the wrapper before calling DFP. Your adapter must not set any targeting directly.
+If the `targetingType` member is set to `"slot"` then the targeting will be set only on the slot identified by the `htSlot` and `ref` members. For targeting multiple slots, return multiple parcels.
+If the `targetingType` member is set to `"page"` then the targeting will be set at page-level. The `htSlot` and `ref` members are not necessary for page-level targeting parcels, and if present will be ignored.
+Your adapter may return both page-level and slot-level parcels, if desired.
+If you have no targeting to set, you may resolve your promises with parcels with empty targeting objects, or with empty arrays (ie. no parcels at all). Your promises must always be resolved. Resolving your promise is the signal to the wrapper that your adapter has finished its work.
 
 ## <a name='eventModel'></a> High Level Event Model
 
@@ -188,16 +162,11 @@ These parcels will be fed into both of the functions that your adapter needs to 
     * Partner-specific configuration validation is performed - checking that all the required fields are provided and that they are in the correct format.
 4. An external request for demand is made to the wrapper. This can be via a googletag display or refresh call, or by other methods depending on the wrapper product in use.
 The wrapper requests demand from the partner modules for the required slots (provided in the form of parcels).
-    * The wrapper calls `generateRequestObj(returnParcels)` for every partner module.
-    * The adapter then crafts and returns a request object based on the parcels (containing slot information) specified.
-    * The wrapper then sends out a bid request using the request object.
-    * Depending on how the adapter is set up and whether jsonp is supported, a response callback (`adResponseCallback`) is called.
-    * The adapter parses the response (`parseResponse`) and attaches the demand to the same returnParcels. It also registers the ad creative with the wrapper's render service.
+    * The wrapper calls `__retriever(inParcels)` for every partner module.
+    * The adapter makes its network call(s) and parses the response(s)
+    * The adapter creates an array retunParcels containing parcel objects with any targeting which should be set
     * The returnParcels are then sent back to the wrapper.
 5. The wrapper applies targeting using the demand from the returnParcels.
-6. If the partner wins the auction in the ad server, their creative code will be returned and executed.
-    * The creative code contains a call to the wrapper's render function.
-7. The partner ad is rendered.
 
 ## <a name='creatingPartnerModule'></a> Creating a Partner Module
 
@@ -210,16 +179,16 @@ Once you have a basic idea of what this will look like, and how you will uniquel
 
 The `grapeshot-nob-validator.js` file contains a single export, a `partnerValidator` function, that takes in the configuration object that will be fed to your module's constructor (refer to [Configuration](#configuration) for an example layout) and validates it via type checks. The type checks are performed using an external library called `schema-inspector`, for which the documentation can be found here https://github.com/Atinux/schema-inspector.
 
-We have provided a very basic validation schema based off of the example `mockPartnerConfig.js` object found in the `spec/support` directory for testing (refer to the [Testing](#testing) section for the testing structure).
+We have provided a very basic validation schema in `grapeshot-nob-validator.js` that is based off of the example `mockPartnerConfig.js` object found in the `spec/support` directory for testing (refer to the [Testing](#testing) section for the testing structure).
 
-Once you have filled this file out, you can continue to actually writing your module!
+Once you have filled this file out, you can continue actually writing your module!
 
 ### Step 1: Partner Configuration (`grapeshot-nob.js`)
-This section involves setting up the general partner configuration such as name, default pricing strategy as well as the general format of incoming/outgoing bids for the adapter. Please fill out all of the keys inside the `__profile` variable.
+This section involves setting up the general partner configuration such as name, default pricing strategy as well as the general format of incoming/outgoing bids for the adapter. Please read the following descriptions and update the `__profile` variable if necessary.
 
-* <u>partnerId</u> - This is simply the name of our module, generally if your module is a bidder the name will end with Nob.
+* <u>partnerId</u> - This is simply the name of our module, generally if your module is a bidder the name will end with Nob. The format of the name should be PartnerName{Type}.
 * <u>namespace</u> - Should be the same as partnerId, it is the namespace that is used internally to store all of variables/functions related to your module, i.e. adResponseCallbacks.
-* <u>statsId</u> - A unique identifier used for analytics.
+* <u>statsId</u> - A unique identifier used for analytics that will be provided for you.
 * <u>version</u> - If this is the first iteration of your module, please leave this field at 2.0.0.
 * <u>targetingType</u> - The targeting type of your bidder, the default is slot for slot level targeting but could also be page.
 * <u>enabledAnalytics</u> - The analytics that the wrapper will track for the module. requestTime is the only currently supported analytic, which records different times around when bid requests occur.
@@ -231,42 +200,16 @@ This section involves setting up the general partner configuration such as name,
     * <u>om</u> - This key signals the open market bid in cpm.
     * <u>pm</u> - This key signals the private market bid in cpm.
     * <u>pmid</u> - This key signals the private market deal id.
-
-The last three properties are critical for the wrapper to understand how to interact with the endpoint:
-* callbackType:
-    * <u>Partner.CallbackTypes.ID</u> -
-        Use this option if your endpoint accepts an arbitrary identifier in requests which will be returned in the matching response. You will need to set this callbackId in the `generateRequestObj` function and retrieve it in the adResponseCallback function. This is the preferred method for matching requests and responses.
-    * <u>Partner.CallbackTypes.CALLBACK_NAME</u> -
-        Use this option if your endpoint has no parameter which can be used as a callback ID. The wrapper will generate a new callback function for each request, and use the function name to tie requests to responses.
-    * <u>Partner.CallbackTypes.NONE</u> -
-        Use this option if your endpoint supports AJAX only and will return a pure JSON response rather than JSONP with a callback function. In this mode your endpoint will not receive any demand requests if the user is using a browser which does not fully support AJAX, such as Internet Explorer 9 or earlier.
-* architecture:
-    * <u>Partner.Architectures.MRA</u> -
-        Use this option (Multi-Request Architecture) if your endpoint requires a separate network request for each ad slot. In this mode your endpoint will receive one network request for every xSlot mapping active in the current wrapper demand request.
-    * <u>Partner.Architectures.FSRA</u> -
-        Use this option (Fully Single-Request Architecture) if your endpoint can handle any number of slots in a single request in any combination, including multiple requests for the same slot. In this mode your endpoint will receive a single network request per wrapper demand request.
-    * <u>Partner.Architectures.SRA</u> -
-        Use this option (Single-Request Architecture) if your endpoint can handle any number of slots in a single request, but cannot repeat the same xSlot more than once in a given request. e.g., you use a placementId and can receive a request for multiple placementIds at once, but not for the same placementId twice. The wrapper will arrange the mapped xSlots into the minimum possible number of network requests to your endpoint.
-* requestType:
-    * <u>Partner.RequestTypes.ANY</u> -
-        Use any request type when making requests. The wrapper will attempt to make an AJAX request for your bid requests, if XHR is not supported, the wrapper will attempt to make a JSONP request if possible.
-    * <u>Partner.RequestTypes.AJAX</u> -
-        Use only AJAX for bid requests. Note, if the browser does not support ajax the bid requests will not go out.
-    * <u>Partner.RequestTypes.JSONP</u> -
-        Use only JSONP for bid requests.
-
-Please also fill out the `bidTransformerConfigs` according to your module's bid response cpm format.
-Refer to the below [BidRoundingTransformer](#bidRounding) section for details on how the bidTransformer works. It is <b>crucial</b> that you fill this out correctly and output your bid in <b><u>CENTS</u></b>, otherwise all of your cpm values will be incorrectly formated (i.e. passing dollars instead of cents).
+* lineItemType, callbackType, architecture, requestType:
+    * These properties are required by standard bidding partner modules. The wrapper's validation requires that they be present, but for a non-bidding partner you can leave them as their default values and ignore them.
 
 ### Step 2: Generate Request URL (`grapeshot-nob.js`)
 This step is for crafting a bid request url given a specific set of parcels.
 
-For this step, you must fill out the `generateRequestObj(returnParcels)` function. This function takes in an array of returnParcels.
+For this step, you must fill out the `generateRequestObjs(inParcels)` function. This function takes in the array of parcels from the wrapper.
 These are the parcel objects that contain the different slots for which demand needs to be requested.
 
-The wrapper will ensure that the array contains an appropriate set of parcels to pass into a single network request for your endpoint based on the value set in __profile.architecture. Note, in the particular case your architecture is MRA, this array will have length 1.
-
-Using this array of parcels, the adapter must craft a request object that will be used to send out the bid request for these slots. This object must contain the request URL, an object containing query parameters, and a callbackId.
+Using this array of parcels, the adapter must craft an array of request objects that will be used to send out the network requests for these slots. These objects must contain the request URL, an object containing query parameters, and a callbackId. Each object corresponds to a single network request. If your endpoint is SRA, this array should be of length 1.
 
 The final returned object should looks something like this:
 ```javascript
@@ -276,13 +219,10 @@ The final returned object should looks something like this:
         slots: [
             {
                 placementId: 54321,
-                sizes: [[300, 250]]
             },{
                 placementId: 12345,
-                sizes: [[300, 600]]
             },{
                 placementId: 654321,
-                sizes: [[728, 90]]
             }
         ],
         site: 'http://google.com'
@@ -293,61 +233,12 @@ The final returned object should looks something like this:
 
 More information can be found in the comment section of the function itself.
 
-### Step 3: Response Callback (`grapeshot-nob.js`)
-Once the request from Step 2 finishes the `adResponseCallback` will be called to store the returned response in a `adResponseStore` object.
+### Step 3: Sending Response (`grapeshot-nob.js`)
+This function takes a single one of the objects from the previous step and sends the network request to your endpoint. Customize it as needed.
 
-If `__profile.callbackType` is set to `CALLBACK_NAME` or `NONE`, the wrapper will handle the callback for you and you can remove this function. If it is set to ID, you must retrieve the callback ID from the network response and store that response in the `_adResponseStore` object keyed by the callback ID.
-
-See the function in the template for details.
-
-### Step 4: Parsing and Storing Demand (`grapeshot-nob.js`)
-In this step the adapter must parse the returned demand from the bid response and attach it the returnParcels objects.
-The returnParcels array will be one of the same arrays that was passed to `generateRequestObj` earlier.
-
-This step involves first matching the returned bids to the internal returnParcels objects. This can be done via some
-identifier that was setup for an xSlot (for example, a placementId) in the partner configuration and the same id being present in the bid response object.
-
-This function first iterates over all of the returned bids, parsing them and attaching the demand to the returnParcel objects (which will be implicitly passed back to the wrapper). This step also involves registering the creative (if returned) with the render service, which is responsible for storing and rendering that creative if the corresponding demand wins the DFP auction.
-
-In order to complete this step correctly, please fill out the section which includes the matching criteria. This step is necessary to map returnParcel objects to the returned bids correctly. In order to do this, we need to use some common criteria that is present both in the xSlot configuration and in the returned bids (usually placementIds or inventory codes).
-
-Also please fill out each of the variables for each bid, these will be attached to the parcel objects to store the demand:
-
-* bidPrice - The bid price for the given slot
-* bidWidth - The width of the given slot
-* bidHeight - The height of the given slot
-* bidCreative - The creative/adm for the given slot that will be rendered if is the winner.
-* bidDealId - The dealId if applicable for this slot.
-* bidIsPass - True/false value for if the module returned a pass for this slot.
-
-### Step 5: Rendering (`grapeshot-nob.js`)
-This step is for rendering the winning creative. If the partner module's line item wins, the creative code will be returned and inserted into the iframe for that googletag slot. The standard creative code will contain a call to the partner module's specific `render` function.
-
-The adm passed into this function will be the same bidCreative that was earlier attached to a given parcel object.
-They are matched via the id targeting key.
-
-The included `render` function should work as is for most partners, as it simply involves a call to document.write to write the creative to the iframe in which it was passed into by dfp.
-
-### Step 6: Exports (`grapeshot-nob-exports.js`)
-In this step, you will be required to fill out the exports file for your module. This file will contain all of the functions that will need to be exposed to outside page if they need to be accessed outside of the wrapper. In the usual case, all you will need to change in this file is your partner module's name in the included snippet:
-
-```javascript
-shellInterface.GrapeshotNob = { //shell interface is the window variable that is accessable through the window object, currently this will always be window.headertag
-    render: SpaceCamp.services.RenderService.renderDfpAd.bind(null, 'GrapeshotNob')
-};
-```
-
-This snippet, exposes your module's render function to the outside world via the `window.headertag` namespace.
-
-If your module requires using a custom adResponse callback via Partner.CallbackTypes.ID callback type, that callback will need to be exposed here. Which would look something like this:
-
-```javascript
-if (__directInterface.Layers.PartnersLayer.Partners.GrapeshotNob) {
-    shellInterface.GrapeshotNob = shellInterface.GrapeshotNob || {};
-    shellInterface.GrapeshotNob.adResponseCallback = __directInterface.Layers.PartnersLayer.Partners.GrapeshotNob.adResponseCallback;
-}
-```
-
+### Step 4: Parsing Response (`grapeshot-nob.js`)
+In this step the adapter must parse the response from your endpoint and create returnParcels objects.
+The returnParcels parameter will be an array passed in from the `__sendDemandRequest` function, probably empty. Fill it with any number of new return parcels providing the targeting to set.
 
 # <a name='helpers'></a> Utility Libraries
 There are a lot of helper objects available to you in you partner module.
@@ -364,7 +255,7 @@ There are a lot of helper objects available to you in you partner module.
     * if entity is a string, return true if string is empty.
     * if entity is an object, return true if the object has no properties.
     * if entity is an array, return true if the array is empty.
-* `arrayDelete(arr, value)` - Delete either given value from an object or array.
+* `arrayDelete(arr, value)` - Delete given value from an object or array.
 * `randomSplice(arr)` - Returns a randomly spliced item from an array.
 * `deepCopy(entity)` - Return a deep copy of the entity.
 * `mergeObjects(entity1, entity2, ...)` - Takes the first entity and overwrites it with the next entity, returning the final object.
@@ -431,78 +322,5 @@ var bidTransformConfig = {          // Default rounding configuration
     }]
 };
 ```
-
-# <a name='testing'></a> Testing
-
-### General Test Structure
-For our unit testing suite we are using a combination of jasmine as a test runner, chai for assertion and schema-inspector for type validation.
-
-The spec folder is where all of the testing files are contained and is structured as follows:
-* spec - The main folder for all of unit testing
-    * support - Contains various stubs and mock data
-        * `mockPartnerConfig.json` - Contains your module mock partner config that is used throughout the suite
-        * `libraryStubData.js` - Stubs for various libraries
-        * `partnerStub.js` - Stub for the partner library
-        * `jasmine.json` - Jasmine test runner config
-    * `generateRequestObj.spec.js` - The spec for testing `generateRequestObj` function
-    * `parseResponse.spec.js` - The spec for testing `parseResponse` function
-    * `profile.spec.js` - The spec for testing the partner's `profile` configuration
-
-As you can see, we have divided the spec files based on the different functions/areas that you need to fill out for your module.
-
-### <a name='basictests'></a> Running Basic Tests
-In order to submit your module for review, you must first pass all of the basic tests cases included in the repository. In order to run these tests you must first install all the necessary npm packages by running `npm install` and then simply run the command `npm test` from the root of the repository to execute the tests. NPM version `3.8.6` and node version `v6.1.0` were used when developing these tests.
-
-Before running the `npm test` command you must first fill out both the `mockPartnerConfig.json` to contain a correct sample configuration for your partner. Based on this configuration, parcels will be generated. For SRA partners, all of the slots outlined in your mockPartnerConfig will have corresponding parcels generated. For MRA, only the first xSlot/htSlot combination will have a parcel generated and fed into your module's functions.
-
-You will also need to fill out the various `adResponseMock` variables through out the specs to match the `mockPartnerConfig.json`. These should contain the correct adResponses to satisfy each of the parcels that were generated fro the `mockPartnerConfig.json` This data will be fed into your partner modules and the inputs will be tested.
-
-For example, `mockPartnerConfig.json` contains a sample partner config. Here are the different `returnParcels` arrays that will be generated based on the module's architecture.
-
-```javascript
-var returnParcels_SRA = [{
-    partnerId: 'GrapeshotNob',
-    htSlot: { getId: function () {
-        return "htSlot1"
-    } },
-    ref: '',
-    xSlotRef: { placementId: '54321', sizes: [ [300,250] ] },
-    requestId: '_1496788873668',
-  },{
-    partnerId: 'GrapeshotNob',
-    htSlot: { getId: function () {
-        return "htSlot1"
-    } },
-    ref: '',
-    xSlotRef: { placementId: '12345', sizes: [ [300,600] ] },
-    requestId: '_1496788873668',
-  },{
-    partnerId: 'GrapeshotNob',
-    htSlot: { getId: function () {
-        return "htSlot2"
-    } },
-    ref: '',
-    xSlotRef: { placementId: '654321', sizes: [ [728,90] ] },
-    requestId: '_1496788873668',
-  }]
-
-var returnParcels_MRA = [{
-    partnerId: 'GrapeshotNob',
-    htSlot: { getId: function () {
-        return "htSlot1"
-    } },
-    ref: '',
-    xSlotRef: { placementId: '54321', sizes: [ [300,250] ] },
-    requestId: '_1496788873668',
-  }]
-```
-
-These tests perform basic type checks and make sure that all of the required fields have been filled out correctly. For example, if the `adResponseMock` returned a bid, each of the parcels above for an SRA architecture bidder should contain new additional fields for price, size, creative, and targeting.
-
-However these tests are very basic and we encourage you to write your own test cases to further confirm the functionality of your module. Please refer to the next section on how to write additional test cases.
-
-### <a name='additional'></a> Creating Additional Tests
-
-In order to create additional test cases and further verify your module, please fill out the `ADD MORE TEST CASES TO TEST AGAINST REAL VALUES` section in both `generateRequestObj.spec.js` and `parseResponse.spec.js` for your corresponding module architecture type.
 
 
